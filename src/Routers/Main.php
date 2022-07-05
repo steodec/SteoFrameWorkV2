@@ -23,9 +23,13 @@ class Main {
      * @param string $namespace
      * @param callable|null $middleware
      */
-    public function __construct(string $namespace, callable|null $middleware = NULL) {
+    public function __construct(string $namespace, mixed $middleware = NULL) {
         $this->namespace  = $namespace;
         $this->middleware = $middleware;
+    }
+
+    private function getMiddleWare() {
+        return $this->middleware;
     }
 
     /**
@@ -81,7 +85,7 @@ class Main {
         foreach ($routes as $routeArray):
             foreach ($routeArray as $key => $route):
                 if (!empty($route->getIsGranted())):
-                    if ($this->middleware != NULL or !$this->{"middleware"}($route))
+                    if ($this->middleware != NULL or !$this->getMiddleWare()($route))
                         unset($routes[$key]);
                 endif;
             endforeach;

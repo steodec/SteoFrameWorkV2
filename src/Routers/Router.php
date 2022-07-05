@@ -12,7 +12,7 @@ class Router {
      */
     public function __construct(string $_url) { $this->_url = $_url; }
 
-    public function add(string $path, callable $callable, string $name, string $method): Route {
+    public function add(string $path, string $callable, string $name, string $method): Route {
         $route                     = new Route($path, $callable);
         $this->_routes[$method][]  = $route;
         $this->_namedRoutes[$name] = $route;
