@@ -7,6 +7,7 @@ use JetBrains\PhpStorm\NoReturn;
 use ReflectionException;
 use SalernoLabs\PHPToXML\Convert;
 use Steodec\SteoFrameWork\Orm\AbstractEntities;
+use Steodec\SteoFrameWork\Routers\Attributes\RouteAttribute;
 use Steodec\SteoFrameWork\Routers\Main;
 use Steodec\SteoFrameWork\Routers\Route;
 use Twig\Environment;
@@ -95,7 +96,7 @@ abstract class AbstractControllers {
         if (is_null($routeName)):
             return $routes;
         else:
-            $route = array_filter($routes, fn(Route $el) => $el->getName() == $routeName);
+            $route = array_filter($routes, fn(RouteAttribute $el) => $el->getName() == $routeName);
             $path  = array_values($route)[0]->getPath();
             if (str_contains($path, ":")):
                 $re = '/:.+/m';
