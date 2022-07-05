@@ -1,6 +1,6 @@
 <?php
 
-namespace Steodec\SteoFrameWork\Orm;
+namespace Steodec\SteoFrameWork\ORM;
 
 use PDO;
 use PDOException;
