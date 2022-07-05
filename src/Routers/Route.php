@@ -24,7 +24,7 @@ class Route {
      * @param string $_path
      * @param callable $_callable
      */
-    public function __construct(string $_path, callable $_callable) {
+    public function __construct(string $_path, string $_callable) {
         $this->_path     = trim($_path, '/');
         $this->_callable = $_callable;
     }

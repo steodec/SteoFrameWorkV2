@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a60544dc68dda432f863bbaae5e3d633",
+    "content-hash": "57f8456d7e3f62618652935765fc66da",
     "packages": [
         {
             "name": "haydenpierce/class-finder",
