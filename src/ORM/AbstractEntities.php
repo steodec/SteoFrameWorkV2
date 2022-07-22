@@ -1,18 +1,12 @@
 <?php
 
-namespace Steodec\SteoFrameWork\ORM;
+namespace Steodec\SteoFrameWork\Orm;
 
+use phpDocumentor\Reflection\Types\This;
 use ReflectionException;
 
 abstract class AbstractEntities {
-    /**
-     * @const string TABLE_NAME
-     */
     public const TABLE_NAME = "";
-
-    /**
-     * @var mixed
-     */
     public mixed $id;
 
     /**
