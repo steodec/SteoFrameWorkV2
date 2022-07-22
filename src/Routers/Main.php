@@ -85,7 +85,7 @@ class Main {
         foreach ($routes as $routeArray):
             foreach ($routeArray as $key => $route):
                 if (!empty($route->getIsGranted())):
-                    if ($this->middleware != NULL and !$this->getMiddleWare()($route))
+                    if ($this->middleware != NULL or !$this->getMiddleWare()($route))
                         unset($routes[$key]);
                 endif;
             endforeach;
