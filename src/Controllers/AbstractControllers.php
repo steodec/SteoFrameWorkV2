@@ -96,14 +96,15 @@ abstract class AbstractControllers {
         if (is_null($routeName)):
             return $routes;
         else:
-            $route = array_filter($routes, fn(RouteAttribute $el) => $el->getName() == $routeName);
-            $path  = array_values($route)[0]->getPath();
+            $route = $routes[$routeName];
+            $path  = $route->getPath();
             if (str_contains($path, ":")):
                 $re = '/:.+/m';
                 preg_match_all($re, $path, $matches);
                 foreach ($matches[0] as $match):
                     $path = str_replace($match, $params[substr($match, 1)], $path);
                 endforeach;
+                $path = '/' . $path;
             endif;
             return $path;
         endif;
