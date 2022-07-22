@@ -58,5 +58,12 @@ class Route {
         return TRUE;
     }
 
+    /**
+     * @return string
+     */
+    public function getPath(): string {
+        return $this->_path;
+    }
+
 
 }
