@@ -33,19 +33,6 @@ class Main {
     }
 
     /**
-     * @throws RouterException
-     * @throws ReflectionException
-     */
-    public function run(): void {
-        $routes = $this->getRoute();
-        $router = new Router($_GET['url']);
-        foreach ($routes as $route):
-            $router->add($route->getPath(), $route->getCallable(), $route->getName(), $route->getMethod());
-        endforeach;
-        $router->run();
-    }
-
-    /**
      * @throws ReflectionException
      */
     private function registerController(string $controller): array {
@@ -76,21 +63,42 @@ class Main {
      * @throws ReflectionException
      * @throws Exception
      */
-    public function getRoute(): array {
+    private function getRoutes(): array {
         $classes = ClassFinder::getClassesInNamespace($this->namespace, ClassFinder::RECURSIVE_MODE);
         $routes  = [];
         foreach ($classes as $class) {
             $routes = array_merge($routes, self::registerController($class));
         }
-        foreach ($routes as $routeArray):
-            foreach ($routeArray as $key => $route):
-                if (!empty($route->getIsGranted())):
-                    if ($this->middleware != NULL and !$this->getMiddleWare()($route))
-                        unset($routes[$key]);
-                endif;
-            endforeach;
-        endforeach;
         return $routes;
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function returnRoute(): Router {
+        $routes = $this->getRoutes();
+        $router = new Router($_GET['url']);
+        foreach ($routes as $route):
+            if (empty($route->getIsGranted())):
+                $router->add($route->getPath(), $route->getCallable(), $route->getName(), $route->getMethod());
+            elseif ($this->getMiddleware() == NULL or $this->getMiddleware()($route)):
+                $router->add($route->getPath(), $route->getCallable(), $route->getName(), $route->getMethod());
+            endif;
+        endforeach;
+        return $router;
+    }
+
+    public function getRoute(): array {
+        $router = $this->returnRoute();
+        return $router->getNamedRoutes();
+    }
+
+    /**
+     * @throws RouterException
+     */
+    public function run(): void {
+        $router = $this->returnRoute();
+        $router->run();
     }
 
 }

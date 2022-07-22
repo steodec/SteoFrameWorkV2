@@ -20,6 +20,20 @@ class Router {
     }
 
     /**
+     * @return array
+     */
+    public function getRoutes(): array {
+        return $this->_routes;
+    }
+
+    /**
+     * @return array
+     */
+    public function getNamedRoutes(): array {
+        return $this->_namedRoutes;
+    }
+
+    /**
      * @throws RouterException
      */
     public function run(): mixed {
