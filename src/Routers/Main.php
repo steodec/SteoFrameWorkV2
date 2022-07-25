@@ -23,25 +23,28 @@ class Main {
      * @param string $namespace
      * @param callable|null $middleware
      */
-    public function __construct(string $namespace, mixed $middleware = NULL) {
+    public function __construct(string $namespace, ?callable $middleware = NULL) {
         $this->namespace  = $namespace;
         $this->middleware = $middleware;
-    }
-
-    private function getMiddleWare() {
-        return $this->middleware;
     }
 
     /**
      * @throws RouterException
      * @throws ReflectionException
+     * @throws Exception
      */
     public function run(): void {
         $routes = $this->getRoute();
         $router = new Router($_GET['url']);
-        foreach ($routes as $route):
-            $router->add($route->getPath(), $route->getCallable(), $route->getName(), $route->getMethod());
-        endforeach;
+        foreach ($routes as $route) {
+            if (empty($route->getIsGranted())):
+                $router->add($route->getPath(), $route->getCallable(), $route->getName(), $route->getMethod());
+            else:
+                if ($this->getMiddleware() == NULL or $this->getMiddleware()($route)) {
+                    $router->add($route->getPath(), $route->getCallable(), $route->getName(), $route->getMethod());
+                }
+            endif;
+        }
         $router->run();
     }
 
@@ -73,24 +76,45 @@ class Main {
     }
 
     /**
-     * @throws ReflectionException
+     * @return array
      * @throws Exception
+     * @throws ReflectionException
      */
     public function getRoute(): array {
-        $classes = ClassFinder::getClassesInNamespace($this->namespace, ClassFinder::RECURSIVE_MODE);
+        $classes = ClassFinder::getClassesInNamespace($this->getNamespace(), ClassFinder::RECURSIVE_MODE);
         $routes  = [];
         foreach ($classes as $class) {
             $routes = array_merge($routes, self::registerController($class));
         }
-        foreach ($routes as $routeArray):
-            foreach ($routeArray as $key => $route):
-                if (!empty($route->getIsGranted())):
-                    if ($this->middleware != NULL or !$this->getMiddleWare()($route))
-                        unset($routes[$key]);
-                endif;
-            endforeach;
-        endforeach;
         return $routes;
+    }
+
+    /**
+     * @return string
+     */
+    public function getNamespace(): string {
+        return $this->namespace;
+    }
+
+    /**
+     * @param string $namespace
+     */
+    public function setNamespace(string $namespace): void {
+        $this->namespace = $namespace;
+    }
+
+    /**
+     * @return callable|null
+     */
+    public function getMiddleware(): ?callable {
+        return $this->middleware;
+    }
+
+    /**
+     * @param callable|null $middleware
+     */
+    public function setMiddleware(mixed $middleware): void {
+        $this->middleware = $middleware;
     }
 
 }
