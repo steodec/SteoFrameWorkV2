@@ -20,7 +20,8 @@ use Twig\Loader\FilesystemLoader;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
 
-abstract class AbstractControllers {
+abstract class AbstractControllers
+{
     /**
      * @param array|object $object
      * @param HttpStatus $httpStatusCode
@@ -28,7 +29,8 @@ abstract class AbstractControllers {
      * @return void
      * @throws Exception
      */
-    public function renderXML(array|object $object, HttpStatus $httpStatusCode = HttpStatus::OK): void {
+    public function renderXML(array|object $object, HttpStatus $httpStatusCode = HttpStatus::OK): void
+    {
         $converter = new Convert();
         header('Content-type: application/xml');
         http_response_code($httpStatusCode->value);
@@ -42,25 +44,40 @@ abstract class AbstractControllers {
      *
      * @return void
      */
-    public function renderJSON(array|object $object, HttpStatus $httpStatusCode = HttpStatus::OK): void {
+    public function renderJSON(array|object $object, HttpStatus $httpStatusCode = HttpStatus::OK): void
+    {
         header('Content-type: application/json');
         http_response_code($httpStatusCode->value);
         echo json_encode($object);
     }
 
+    private function CallingFunctionName()
+    {
+
+        $ex = new Exception();
+        $trace = $ex->getTrace();
+        return $trace[2]['function'];
+    }
+
+    private function CallingClassName()
+    {
+
+        $ex = get_class($this);
+        $trace = explode(DIRECTORY_SEPARATOR, $ex);
+        return $trace[count($trace) - 1];
+    }
+
     /**
-     * @param string $templatePath
+     * @param string|null $templatePath
      * @param array|null $params
      * @return void
-     * @throws LoaderError
-     * @throws RuntimeError
-     * @throws SyntaxError
      */
-    public function renderHTML(string $templatePath, ?array $params = []): void {
-        $params['titre']   = $params['titre'] ?? "";
+    public function renderHTML(?string $templatePath, ?array $params = []): void
+    {
+        $params['titre'] = $params['titre'] ?? "";
         $params['session'] = $_SESSION;
-        $loader            = new FilesystemLoader(Constants::TEMPLATE_PATH);
-        $twig              = new Environment($loader, ['debug' => $_ENV['debug']]);
+        $loader = new FilesystemLoader(Constants::TEMPLATE_PATH);
+        $twig = new Environment($loader, ['debug' => $_ENV['debug']]);
         $twig->addExtension(new DebugExtension());
         $twig->addExtension(new StringExtension());
         $twig->addFunction(new TwigFunction('getRoute', fn(?string $path = NULL, ?array $params = NULL) => $this->returnRoute($path, $params)));
@@ -69,7 +86,15 @@ abstract class AbstractControllers {
         $twig->addGlobal('_get', $_GET);
         $twig->addGlobal('_post', $_POST);
         $twig->addFilter(new TwigFilter('json_decode', fn(string $a) => json_decode($a)));
-        echo $twig->render($templatePath, $params);
+        try {
+            if (empty($templatePath)) {
+                echo $twig->render($this->CallingClassName() . "/" . $this->CallingFunctionName() . ".twig", $params);
+            } else {
+                echo $twig->render($templatePath, $params);
+            }
+        } catch (LoaderError|RuntimeError|SyntaxError $e) {
+            var_dump($e);
+        }
     }
 
     /**
@@ -78,7 +103,8 @@ abstract class AbstractControllers {
      * @return void
      * @throws ReflectionException
      */
-    #[NoReturn] protected function redirect(string $newPath): void {
+    #[NoReturn] protected function redirect(string $newPath): void
+    {
         $route = $this->returnRoute($newPath);
         header('Location: ' . $route);
         exit;
@@ -91,13 +117,14 @@ abstract class AbstractControllers {
      * @return array|string
      * @throws ReflectionException
      */
-    public function returnRoute(?string $routeName = NULL, ?array $params = []): array|string {
+    public function returnRoute(?string $routeName = NULL, ?array $params = []): array|string
+    {
         $routes = (new Main('App\\controllers'))->getRoute();
         if (is_null($routeName)):
             return $routes;
         else:
             $route = array_filter($routes, fn(RouteAttribute $el) => $el->getName() == $routeName);
-            $path  = array_values($route)[0]->getPath();
+            $path = array_values($route)[0]->getPath();
             if (str_contains($path, ":")):
                 $re = '/:.+/m';
                 preg_match_all($re, $path, $matches);
@@ -114,7 +141,8 @@ abstract class AbstractControllers {
      * @param array $form
      * @return AbstractEntities
      */
-    public function ArrayToEntity(AbstractEntities $entity, array $form): AbstractEntities {
+    public function ArrayToEntity(AbstractEntities $entity, array $form): AbstractEntities
+    {
         foreach ($form as $key => $value):
             $entity->{$key} = $value;
         endforeach;
