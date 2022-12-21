@@ -1,6 +1,6 @@
 <?php
 
-namespace Steodec\SteoFrameWork\Orm;
+namespace Steodec\SteoFrameWork\ORM;
 
 use phpDocumentor\Reflection\Types\This;
 use ReflectionException;
