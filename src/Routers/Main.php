@@ -63,9 +63,8 @@ class Main {
                     $array       = explode('\\', strtolower($method->class));
                     $class       = end($array);
                     $method_name = strtolower($method->name);
+                    if ($method_name == 'index' && empty($newRoute->getPath())) $newRoute->setPath("/{$class}/");
                     if (empty($newRoute->getPath())) $newRoute->setPath("/{$class}/{$method_name}");
-                    if ($method_name == 'index')
-                        $newRoute->setPath("/{$class}/");
                     if (empty($newRoute->getMethod())) $newRoute->setMethod(HTTPMethods::GET);
                     $newRoute->setCallable($method->class . "#" . $method->name);
                     $routeArray[] = $newRoute;
