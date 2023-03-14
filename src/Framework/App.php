@@ -30,7 +30,7 @@ class App
     /**
      * @var string[]
      */
-    private array $middlewares;
+    private array $middlewares = [];
 
     /**
      * @var int
