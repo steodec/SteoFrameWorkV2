@@ -1,7 +1,7 @@
 <?php
 namespace Steodec\SteoFrameWork\Middleware;
 
-use Framework\Router;
+use Steodec\SteoFrameWork\Router\Router;
 use Psr\Http\Message\ServerRequestInterface;
 
 class RouterMiddleware

@@ -1,7 +1,7 @@
 <?php
 namespace Steodec\SteoFrameWork\Middleware;
 
-use Framework\Router;
+use Steodec\SteoFrameWork\Router\Route;
 use GuzzleHttp\Psr7\Response;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -22,7 +22,7 @@ class DispatcherMiddleware
 
     public function __invoke(ServerRequestInterface $request, callable $next)
     {
-        $route = $request->getAttribute(Router\Route::class);
+        $route = $request->getAttribute(Route::class);
         if (is_null($route)) {
             return $next($request);
         }

@@ -1,14 +1,12 @@
 <?php
 namespace Steodec\SteoFrameWork\Middleware;
 
-use Interop\Http\ServerMiddleware\DelegateInterface;
-use Interop\Http\ServerMiddleware\MiddlewareInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class MethodMiddleware implements MiddlewareInterface
+class MethodMiddleware
 {
 
-    public function process(ServerRequestInterface $request, DelegateInterface $next)
+    public function process(ServerRequestInterface $request, callable $next)
     {
         $parsedBody = $request->getParsedBody();
         if (array_key_exists('_method', $parsedBody) &&
@@ -16,6 +14,6 @@ class MethodMiddleware implements MiddlewareInterface
         ) {
             $request = $request->withMethod($parsedBody['_method']);
         }
-        return $next->process($request);
+        return $next($request);
     }
 }
