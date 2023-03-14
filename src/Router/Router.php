@@ -2,55 +2,57 @@
 
 namespace Steodec\SteoFrameWork\Router;
 
+use AltoRouter;
+use Psr\Http\Message\ServerRequestInterface;
+
 class Router
 {
-    private string $_url;
-    private array $_routes      = [];
-    private array $_namedRoutes = [];
+    private AltoRouter $router;
 
-    /**
-     * @param string $_url
-     */
-    public function __construct(string $_url)
+    public function __construct()
     {
-        $this->_url = $_url;
-    }
-
-    public function add(string $path, string $callable, string $name, string $method): Route
-    {
-        $route                     = new Route($path, $callable);
-        $this->_routes[$method][]  = $route;
-        $this->_namedRoutes[$name] = $route;
-        return $route;
+        $this->router = new AltoRouter();
     }
 
     /**
-     * @throws RouterException
+     * @param string      $method
+     * @param string      $path
+     * @param callable    $callback
+     * @param string|null $name
+     *
+     * @return void
+     * @throws \Exception
      */
-    public function run(): mixed
+    public function add(string $method, string $path, callable $callback, string $name = null)
     {
-        if (!isset($this->_routes[$_SERVER['REQUEST_METHOD']])) {
-            throw new RouterException('REQUEST_METHOD does not exist');
-        }
-        foreach ($this->_routes[$_SERVER['REQUEST_METHOD']] as $route) {
-            if ($route instanceof Route) {
-                if ($route->match($this->_url)) {
-                    return $route->call();
-                }
-            }
-        }
-        header("HTTP/1.0 404 Not Found");
-        return false;
+        $this->router->map($method, $path, $callback, $name);
     }
 
     /**
-     * @throws RouterException
+     * @param \Psr\Http\Message\ServerRequestInterface $request
+     *
+     * @return \Steodec\SteoFrameWork\Router\Route|null
      */
-    public function url(string $name, array $params = [])
+    public function match(ServerRequestInterface $request): ?Route
     {
-        if (!isset($this->namedRoutes[$name])) {
-            throw new RouterException('No route matches this name');
+        $route = $this->router->match($request->getUri()->getPath(), $request->getMethod());
+        return ($route) ? new Route($route['name'], $route['target'], $route['params']) : null;
+    }
+
+    /**
+     * @param string $name
+     * @param array  $params
+     * @param array  $queryParams
+     *
+     * @return string
+     * @throws \Exception
+     */
+    public function generateUri(string $name, array $params = [], array $queryParams = [])
+    {
+        $uri = $this->router->generate($name, $params);
+        if (!empty($queryParams)) {
+            return $uri . '?' . http_build_query($queryParams);
         }
-        return $this->_namedRoutes[$name]->getUrl($params);
+        return $uri;
     }
 }

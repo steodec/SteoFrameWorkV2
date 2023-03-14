@@ -10,5 +10,4 @@ class Constants
     const CSS_PATH           = self::PUBLIC_PATH."/assets/css";
     const IMG_PATH           = self::PUBLIC_PATH."/assets/img";
     const TEMPLATE_PATH      = "./src/views/";
-    const BASE_TEMPLATE_PATH = "./src/views/";
 }//end class

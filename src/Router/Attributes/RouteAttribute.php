@@ -6,19 +6,22 @@ use Attribute;
 
 abstract class RouteAttribute
 {
-    private string|bool $_path;
+    private string|bool $path;
     /**
      * @var string|callable
      */
-    private mixed $_callable;
-    private string|bool $_method;
-    private string|bool $_name;
+    private mixed $callable;
+    private string|bool $method;
+    private string|bool $name;
 
-    public function __construct(HTTPMethods|bool $_method = false, string|bool $_path = false, string|bool $_name = false)
-    {
-        $this->_path = $_path;
-        $this->_method = $_method->value;
-        $this->_name = $_name;
+    public function __construct(
+        HTTPMethods|bool $_method = false,
+        string|bool $_path = false,
+        string|bool $_name = false
+    ) {
+        $this->path = $_path;
+        $this->method = $_method->value;
+        $this->name = $_name;
     }
 
     /**
@@ -28,7 +31,7 @@ abstract class RouteAttribute
      */
     public function setPath(bool|string $path): RouteAttribute
     {
-        $this->_path = $path;
+        $this->path = $path;
         return $this;
     }
 
@@ -37,7 +40,7 @@ abstract class RouteAttribute
      */
     public function getPath(): bool|string
     {
-        return $this->_path;
+        return $this->path;
     }
 
     /**
@@ -47,7 +50,7 @@ abstract class RouteAttribute
      */
     public function setCallable(mixed $callable): RouteAttribute
     {
-        $this->_callable = $callable;
+        $this->callable = $callable;
         return $this;
     }
 
@@ -56,7 +59,7 @@ abstract class RouteAttribute
      */
     public function getCallable(): mixed
     {
-        return $this->_callable;
+        return $this->callable;
     }
 
     /**
@@ -66,7 +69,7 @@ abstract class RouteAttribute
      */
     public function setMethod(bool|HTTPMethods $method): RouteAttribute
     {
-        $this->_method = $method->value;
+        $this->method = $method->value;
         return $this;
     }
 
@@ -75,7 +78,7 @@ abstract class RouteAttribute
      */
     public function getMethod(): bool|string
     {
-        return $this->_method;
+        return $this->method;
     }
 
     /**
@@ -85,7 +88,7 @@ abstract class RouteAttribute
      */
     public function setName(bool|string $name): RouteAttribute
     {
-        $this->_name = $name;
+        $this->name = $name;
         return $this;
     }
 
@@ -94,6 +97,6 @@ abstract class RouteAttribute
      */
     public function getName(): bool|string
     {
-        return $this->_name;
+        return $this->name;
     }
 }

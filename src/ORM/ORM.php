@@ -64,7 +64,7 @@ trait ORM
         endif;
         if (str_ends_with($this->query, $this::TABLE_NAME)) :
             $this->query .= sprintf(" WHERE %s%s:%s", $property, $operatorEnum->value, $property);
-        else:
+        else :
             $this->query .= sprintf(" %s %s%s:%s", $operator, $property, $operatorEnum->value, $property);
         endif;
         $this->values[$property] = $value;
@@ -108,16 +108,16 @@ trait ORM
      */
     public function execute(string $query = null): iterable|AbstractEntities
     {
-        if (is_null($query)):
+        if (is_null($query)) :
             $queryPDO = $this->PDO->prepare($this->query);
-            foreach ($this->values as $key => $value):
+            foreach ($this->values as $key => $value) :
                 $queryPDO->bindParam(":$key", $value, $this->getType($value));
             endforeach;
-        else:
+        else :
             $queryPDO = $this->PDO->query($query);
         endif;
         $result = $queryPDO->execute();
-        if (!$result):
+        if (!$result) :
             throw new ORMException("Une erreur c'est produite");
         endif;
         $return = $query->fetchAll(PDO::FETCH_CLASS, $this::class);
@@ -135,27 +135,29 @@ trait ORM
     public function save(): self
     {
         $query = "";
-        if (is_null($this->getId())):
+        if (is_null($this->getId())) :
             $query = sprintf("INSERT INTO %s", $this::TABLE_NAME);
-        else:
+        else :
             $query = sprintf("UPDATE %s", $this::TABLE_NAME);
         endif;
         $reflectionClass = new ReflectionClass($this);
         $properties = [];
-        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PUBLIC) as $property):
-            if (!$property->isInitialized($this)) continue;
+        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PUBLIC) as $property) :
+            if (!$property->isInitialized($this)) {
+                continue;
+            }
             $properties[$property->getName()] = $property->getValue($this);
         endforeach;
         $query .= $this->formatSet($properties);
         $queryPdo = $this->PDO->prepare($query);
-        foreach ($properties as $key => $property):
+        foreach ($properties as $key => $property) :
             $queryPdo->bindParam(":$key", $property, $this->getType($property));
         endforeach;
         $execute = $queryPdo->execute();
-        if (!$execute):
+        if (!$execute) :
             throw new ORMException("Une erreur c'est produite lors de l'execution");
         endif;
-        if (is_null($this->getId())):
+        if (is_null($this->getId())) :
             $this->id = $this->PDO->lastInsertId($this::TABLE_NAME);
         endif;
         $result = $this->select()
@@ -175,12 +177,12 @@ trait ORM
     private function formatSet(array $properties): string
     {
         $set = "";
-        foreach ($properties as $key => $property):
-            if (array_key_first($properties, $key)):
+        foreach ($properties as $key => $property) :
+            if (array_key_first($properties, $key)) :
                 $set .= "SET";
             endif;
             $set .= " $key = :$key";
-            if (!array_key_last($properties, $key)):
+            if (!array_key_last($properties, $key)) :
                 $set .= ",";
             endif;
         endforeach;
@@ -205,6 +207,4 @@ trait ORM
             default => throw new \Exception('Unexpected value'),
         };
     }
-
-
 }
