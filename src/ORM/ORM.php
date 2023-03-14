@@ -6,138 +6,205 @@ use PDO;
 use ReflectionClass;
 use ReflectionException;
 
-class ORM {
+trait ORM
+{
 
-    protected static ORM|null $_instance = NULL;
-    private PDO               $connection;
+    private PDO $PDO;
+    private string $query = "";
+    private array $values = [];
 
-    private function __construct() {
-        $this->connection = Connection::getInstance();
-    }
 
-    public static function getInstance(): ORM {
-        return (is_null(self::$_instance)) ? new ORM() : self::$_instance;
+    private function __construct(PDO $pdo)
+    {
+        $this->pdo = $pdo;
+    }//end __construct()
+
+    /**
+     * Start query with select
+     *
+     * @return self
+     */
+    public function select(): self
+    {
+        $this->query .= "SELECT";
+        return $this;
     }
 
     /**
-     * Return all entries of object in database
-     * @param AbstractEntities $entity
-     * @return AbstractEntities[]
-     * @throws ORMException
+     * Add select fields
+     *
+     * @param string $fields
+     *
+     * @return self
      */
-    public function readAll(AbstractEntities $entity): iterable {
-        $query = sprintf("SELECT * FROM %s;", $entity::TABLE_NAME);
-
-        $sql = $this->connection->query($query);
-        $sql->execute();
-        $result = $sql->fetchAll($this->connection::FETCH_CLASS, $entity::class);
-        if ($result > 0):
-            return $result;
-        else: return throw new ORMException("N/A");
+    public function addFields(string $fields): self
+    {
+        if (str_ends_with($this->query, "SELECT")) :
+            $this->query .= " " . $fields;
+        else :
+            $this->query .= ", " . $fields;
         endif;
+        return $this;
     }
 
     /**
-     * Return entry by id of object in database
-     * @param AbstractEntities|null $entity
-     * @param string|null $tableName
-     * @param mixed $id
-     * @param string|null $className
-     * @return AbstractEntities
-     * @throws ORMException
+     * Add where case
+     *
+     * @param string       $property
+     * @param OperatorEnum $operatorEnum
+     * @param mixed        $value
+     * @param string       $operator
+     *
+     * @return self
      */
-    public function readByID(AbstractEntities $entity = NULL, string $tableName = NULL, mixed $id = NULL, string $className = NULL): AbstractEntities {
-        if ($entity):
-            $query = sprintf("SELECT * FROM %s WHERE id='%s';", $entity::TABLE_NAME, $entity->id);
+    public function addWhereCase(string $property, OperatorEnum $operatorEnum, mixed $value, string $operator = "AND"): self
+    {
+        if (!str_contains($this->query, 'FROM')) :
+            $this->query .= sprintf(" FROM %s", $this::TABLE_NAME);
+        endif;
+        if (str_ends_with($this->query, $this::TABLE_NAME)) :
+            $this->query .= sprintf(" WHERE %s%s:%s", $property, $operatorEnum->value, $property);
         else:
-            $query = sprintf("SELECT * FROM %s WHERE id='%s';", $tableName, $id);
+            $this->query .= sprintf(" %s %s%s:%s", $operator, $property, $operatorEnum->value, $property);
         endif;
-        $sql = $this->connection->query($query);
-        $sql->execute();
-        $result = $sql->fetchAll($this->connection::FETCH_CLASS, (is_null($entity)) ? $className : $entity::class);
-        if ($result > 0):
-            return $result[0];
-        else: return throw new ORMException("N/A");
-        endif;
+        $this->values[$property] = $value;
+        return $this;
     }
 
     /**
-     * Create row in database
-     * @param AbstractEntities $entity
-     * @return AbstractEntities
+     * Add Order by case in query select
+     *
+     * @param string $property
+     * @param string $descOrAsc
+     *
+     * @return self
+     */
+    public function addOrderBy(string $property, string $descOrAsc = "ASC"): self
+    {
+        $this->query = sprintf(" ORDER BY %s %s", $property, $descOrAsc);
+        return $this;
+    }
+
+    /**
+     * Add Limit in query select
+     *
+     * @param int $limit
+     *
+     * @return self
+     */
+    public function addLimit(int $limit): self
+    {
+        $this->query = " LIMIT " . $limit;
+        return $this;
+    }
+
+    /**
+     * Execute select query
+     *
+     * @param string|null $query
+     *
+     * @return self
+     * @throws ORMException
+     */
+    public function execute(string $query = null): iterable|AbstractEntities
+    {
+        if (is_null($query)):
+            $queryPDO = $this->PDO->prepare($this->query);
+            foreach ($this->values as $key => $value):
+                $queryPDO->bindParam(":$key", $value, $this->getType($value));
+            endforeach;
+        else:
+            $queryPDO = $this->PDO->query($query);
+        endif;
+        $result = $queryPDO->execute();
+        if (!$result):
+            throw new ORMException("Une erreur c'est produite");
+        endif;
+        $return = $query->fetchAll(PDO::FETCH_CLASS, $this::class);
+
+        return (count($return) > 1) ? $return : $return[0];
+    }
+
+    /**
+     * Save entity in database insert or update
+     *
+     * @return self
      * @throws ReflectionException
      * @throws ORMException
      */
-    public function create(AbstractEntities $entity): AbstractEntities {
-        $reflect      = new ReflectionClass($entity);
-        $fields       = [];
-        $values       = [];
-        $valuesFields = [];
-        foreach ($reflect->getProperties(\ReflectionProperty::IS_PUBLIC) as $field):
-            if ($reflect->getProperty($field->name)->isInitialized($entity)):
-                $fields[]       = $field->name;
-                $values[]       = $reflect->getProperty($field->name)->getValue($entity);
-                $valuesFields[] = '?';
-            endif;
-        endforeach;
-        $query = sprintf("INSERT INTO %s (%s) VALUES (%s)", $entity::TABLE_NAME, implode(',', $fields), implode(',', $valuesFields));
-
-        $sql = $this->connection->prepare($query);
-        $sql->execute($values);
-        $id = $this->connection->lastInsertId($entity::TABLE_NAME);
-        return ($this->readByID(tableName: $entity::TABLE_NAME, id: $id, className: $entity::class));
-    }
-
-    /**
-     * Update row in database
-     * @param AbstractEntities $entity
-     * @return AbstractEntities
-     * @throws ReflectionException|ORMException
-     */
-    public function update(AbstractEntities $entity): AbstractEntities {
-        $reflect = new ReflectionClass($entity);
-        $fields  = [];
-        $values  = [];
-        foreach ($reflect->getProperties(\ReflectionProperty::IS_PUBLIC) as $field):
-            if ($reflect->getProperty($field->name)->isInitialized($entity)):
-                $fields[] = $field->name . '= ?';
-                $values[] = $reflect->getProperty($field->name)->getValue($entity);
-            endif;
-        endforeach;
-        $query = sprintf("UPDATE %s SET %s WHERE id='%s'", $entity::TABLE_NAME, implode(',', $fields), $entity->id);
-
-        $sql = $this->connection->prepare($query);
-        $sql->execute($values);
-        return ($this->readByID(tableName: $entity::TABLE_NAME, id: $entity->id, className: $entity::class));
-    }
-
-    /**
-     * Delete row in database
-     * @param AbstractEntities $entity
-     * @return bool
-     */
-    public function delete(AbstractEntities $entity): bool {
-        $query = sprintf("DELETE FROM %s WHERE id='%s'", $entity::TABLE_NAME, $entity->id);
-
-        $sql = $this->connection->prepare($query);
-        return ($sql->execute());
-    }
-
-    /**
-     * Return count of entries in database
-     * @param AbstractEntities $entity
-     * @return int
-     * @throws ORMException
-     */
-    public function count(AbstractEntities $entity): int {
-        $query = sprintf("SELECT count(*) as count FROM %s;", $entity::TABLE_NAME);
-
-        $sql = $this->connection->query($query);
-        $sql->execute();
-        $result = $sql->fetchAll($this->connection::FETCH_CLASS, $entity::class);
-        if ($result > 0):
-            return $result[0]->count;
-        else: return throw new ORMException("N/A");
+    public function save(): self
+    {
+        $query = "";
+        if (is_null($this->getId())):
+            $query = sprintf("INSERT INTO %s", $this::TABLE_NAME);
+        else:
+            $query = sprintf("UPDATE %s", $this::TABLE_NAME);
         endif;
+        $reflectionClass = new ReflectionClass($this);
+        $properties = [];
+        foreach ($reflectionClass->getProperties(ReflectionProperty::IS_PUBLIC) as $property):
+            if (!$property->isInitialized($this)) continue;
+            $properties[$property->getName()] = $property->getValue($this);
+        endforeach;
+        $query .= $this->formatSet($properties);
+        $queryPdo = $this->PDO->prepare($query);
+        foreach ($properties as $key => $property):
+            $queryPdo->bindParam(":$key", $property, $this->getType($property));
+        endforeach;
+        $execute = $queryPdo->execute();
+        if (!$execute):
+            throw new ORMException("Une erreur c'est produite lors de l'execution");
+        endif;
+        if (is_null($this->getId())):
+            $this->id = $this->PDO->lastInsertId($this::TABLE_NAME);
+        endif;
+        $result = $this->select()
+                       ->addWhereCase('id', OperatorEnum::EQUAL, $this->getId())
+                       ->addLimit(1)
+                       ->execute();
+        return $result;
     }
+
+    /**
+     * Return set input like SET key1=:key1, key2=:key2
+     *
+     * @param array $properties
+     *
+     * @return string
+     */
+    private function formatSet(array $properties): string
+    {
+        $set = "";
+        foreach ($properties as $key => $property):
+            if (array_key_first($properties, $key)):
+                $set .= "SET";
+            endif;
+            $set .= " $key = :$key";
+            if (!array_key_last($properties, $key)):
+                $set .= ",";
+            endif;
+        endforeach;
+        return $set;
+    }
+
+    /**
+     * Return PDO type for bindParam
+     *
+     * @param mixed $value
+     *
+     * @return int
+     * @throws \Exception
+     */
+    private function getType(mixed $value)
+    {
+        return match (gettype($value)) {
+            "boolean" => PDO::PARAM_BOOL,
+            "double", "integer" => PDO::PARAM_INT,
+            "array", "object", "string" => PDO::PARAM_STR,
+            'NULL' => PDO::PARAM_NULL,
+            default => throw new \Exception('Unexpected value'),
+        };
+    }
+
+
 }

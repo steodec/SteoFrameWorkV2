@@ -2,15 +2,19 @@
 
 namespace Steodec\SteoFrameWork\Test;
 
-use Steodec\SteoFrameWork\Routers\Attributes\Get;
+use Steodec\SteoFrameWork\Router\Attributes\Get;
 
-class TestClassRoute {
+class TestClassRoute
+{
 
     #[Get]
-    public function index(): void {
+    public function index(): void
+    {
         var_dump('Toto');
     }
 
     #[Get(_name: 'TEST_CREATE')]
-    public function create(): void {}
+    public function create(): void
+    {
+    }
 }

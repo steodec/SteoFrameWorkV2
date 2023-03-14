@@ -14,6 +14,7 @@ namespace Steodec\SteoFrameWork\ORM;
 
 use Exception;
 
-class ORMException extends Exception {
+class ORMException extends Exception
+{
 
-}
+}//end class

@@ -1,6 +1,6 @@
 <?php
 
-namespace Steodec\SteoFrameWork\Routers;
+namespace Steodec\SteoFrameWork\Router;
 
 use Exception;
 

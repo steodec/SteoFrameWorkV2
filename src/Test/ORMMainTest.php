@@ -6,24 +6,28 @@ use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use Steodec\SteoFrameWork\Orm\ORMException;
 
-class ORMMainTest extends TestCase {
+class ORMMainTest extends TestCase
+{
     /**
      * @throws ReflectionException|ORMException
      */
-    public function testCreate() {
+    public function testCreate()
+    {
         $entity       = new TestEntity();
         $entity->name = "Hello World";
         $result       = $entity->create();
         $this->assertEquals($result->name, "Hello World");
     }
 
-    public function testReadAll() {
+    public function testReadAll()
+    {
         $entity = new TestEntity();
         $result = $entity->readAll();
         $this->assertNotEmpty($result);
     }
 
-    public function testReadByID() {
+    public function testReadByID()
+    {
         $entity     = new TestEntity();
         $result     = $entity->readAll();
         $id         = $result[0]->id;
@@ -32,7 +36,8 @@ class ORMMainTest extends TestCase {
         $this->assertEquals($result->id, $id);
     }
 
-    public function testUpdate() {
+    public function testUpdate()
+    {
         $entity       = new TestEntity();
         $result       = $entity->readAll();
         $id           = $result[0]->id;
@@ -43,7 +48,8 @@ class ORMMainTest extends TestCase {
     }
 
 
-    public function testDelete() {
+    public function testDelete()
+    {
         $entity     = new TestEntity();
         $result     = $entity->readAll();
         $id         = $result[0]->id;
